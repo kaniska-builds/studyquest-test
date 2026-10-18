@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101426">
+  <meta name="description" content="Turn study time into a quest. Earn XP, build streaks, and level up with StudyQuest.">
+  <title>StudyQuest — Study. Level Up. Conquer.</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --bg:#0b0e19; --panel:#12172a; --panel2:#191f36; --line:#2b3350;
+      --text:#f4f6ff; --muted:#9da8c7; --purple:#9b8cff; --blue:#69c9ff;
+      --green:#66e0ad; --gold:#ffc66d; --pink:#ff85c2; --radius:20px;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100vh; color:var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse at 15% 0%, rgba(105,86,210,.22), transparent 35%),
+        radial-gradient(ellipse at 100% 25%, rgba(54,153,220,.12), transparent 32%), var(--bg);
+    }
+    button,input,select { font:inherit; }
+    button { cursor:pointer; }
+    .app { max-width:1160px; margin:auto; padding:22px 18px 48px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:24px; }
+    .brand { display:flex; align-items:center; gap:12px; min-width:0; }
+    .brand-mark { display:grid; place-items:center; width:48px; height:48px; flex:0 0 48px; border-radius:15px; font-size:24px; background:linear-gradient(145deg,#a392ff,#5369e8); box-shadow:0 8px 28px #7668e544; }
+    h1,h2,h3,p { margin-top:0; }
+    .brand h1 { font-size:20px; margin:0; letter-spacing:-.5px; }
+    .brand p { color:var(--muted); margin:3px 0 0; font-size:12px; letter-spacing:.7px; text-transform:uppercase; }
+    .header-actions { display:flex; align-items:center; gap:10px; }
+    .pill { border:1px solid var(--line); background:#141a2d; color:var(--text); padding:10px 13px; border-radius:999px; font-size:13px; white-space:nowrap; }
+    .streak-pill strong { color:var(--gold); }
+    .hero { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(260px,.8fr); gap:18px; margin-bottom:18px; }
+    .panel { background:linear-gradient(145deg,rgba(25,31,54,.96),rgba(17,22,40,.96)); border:1px solid rgba(116,130,177,.18); border-radius:var(--radius); padding:22px; box-shadow:0 18px 50px #00000018; }
+    .eyebrow { color:var(--purple); text-transform:uppercase; letter-spacing:1.5px; font-weight:800; font-size:11px; margin-bottom:10px; }
+    .welcome h2 { font-size:clamp(25px,4vw,36px); letter-spacing:-1px; margin-bottom:8px; line-height:1.12; }
+    .welcome p { color:var(--muted); margin-bottom:18px; line-height:1.6; max-width:560px; }
+    .level-row { display:flex; align-items:center; gap:13px; margin-top:20px; }
+    .avatar { display:grid; place-items:center; width:56px; height:56px; flex:0 0 56px; background:#29264b; border:1px solid #6154a5; border-radius:17px; font-size:28px; }
+    .level-info { flex:1; min-width:0; }
+    .level-info-top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+    .level-info-top strong { font-size:14px; }
+    .level-info-top span { font-size:12px; color:var(--muted); }
+    .progress { height:9px; border-radius:99px; overflow:hidden; background:#2b3350; }
+    .progress > div { height:100%; width:0; border-radius:99px; background:linear-gradient(90deg,var(--purple),var(--blue)); transition:width .3s ease; }
+    .small-muted { color:var(--muted); font-size:12px; margin-top:7px; }
+    .streak-card { display:flex; flex-direction:column; justify-content:space-between; background:linear-gradient(150deg,#28203d,#171b30); }
+    .streak-top { display:flex; justify-content:space-between; align-items:center; }
+    .flame { font-size:34px; filter:drop-shadow(0 0 15px #ff9e4233); }
+    .streak-card h3 { font-size:28px; margin:14px 0 4px; }
+    .streak-card p { color:var(--muted); font-size:13px; margin-bottom:20px; }
+    .week { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+    .day { text-align:center; color:var(--muted); font-size:10px; }
+    .day span { display:grid; place-items:center; height:31px; border-radius:10px; background:#252b43; margin-bottom:6px; color:#c8cde0; font-size:12px; }
+    .day.done span { background:#4b3b23; color:var(--gold); border:1px solid #85642e; }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+    .stat { padding:17px; }
+    .stat-top { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; gap:8px; }
+    .stat-icon { font-size:20px; }
+    .stat-value { font-size:25px; font-weight:800; letter-spacing:-.7px; margin:13px 0 4px; }
+    .stat-note { font-size:11px; color:var(--muted); }
+    .main-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(290px,.85fr); gap:18px; }
+    .section-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; }
+    .section-head h2 { font-size:18px; margin:0; letter-spacing:-.3px; }
+    .section-head .sub { font-size:12px; color:var(--muted); margin-top:4px; }
+    .quest-list { display:grid; gap:10px; }
+    .quest { display:flex; align-items:center; gap:12px; border:1px solid var(--line); border-radius:15px; padding:13px; background:#151b30; }
+    .quest-symbol { width:42px; height:42px; flex:0 0 42px; display:grid; place-items:center; background:#282747; border-radius:13px; font-size:20px; }
+    .quest-info { flex:1; min-width:0; }
+    .quest-info strong { display:block; font-size:13px; margin-bottom:5px; }
+    .quest-info span { color:var(--muted); font-size:11px; }
+    .quest-reward { color:var(--green); font-size:12px; font-weight:800; white-space:nowrap; }
+    .quest button { border:1px solid #4c477a; background:#272345; color:#e9e5ff; border-radius:10px; padding:8px 10px; font-size:11px; font-weight:700; }
+    .quest button:disabled { color:#8a94af; background:#20263a; border-color:#333b56; cursor:default; }
+    .timer-panel { text-align:center; }
+    .timer-ring { width:min(210px,65vw); aspect-ratio:1; border-radius:50%; margin:12px auto 18px; display:grid; place-items:center; position:relative; background:conic-gradient(var(--purple) var(--ring,0%), #2a304a 0); padding:8px; }
+    .timer-ring::before { content:""; position:absolute; inset:8px; border-radius:50%; background:#14192c; }
+    .timer-content { position:relative; z-index:1; }
+    .timer-time { font-size:42px; font-weight:800; letter-spacing:-1.8px; font-variant-numeric:tabular-nums; }
+    .timer-label { color:var(--muted); font-size:12px; margin-top:3px; }
+    .timer-controls { display:flex; justify-content:center; gap:9px; flex-wrap:wrap; }
+    .btn { border:1px solid var(--line); color:var(--text); background:#222943; padding:11px 15px; border-radius:12px; font-weight:750; font-size:13px; }
+    .btn.primary { border:0; color:#101326; background:linear-gradient(100deg,#b0a4ff,#72d6ff); box-shadow:0 8px 20px #8b80ff20; }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .timer-note { color:var(--muted); font-size:11px; line-height:1.5; margin:14px auto 0; max-width:280px; }
+    .subject-row { display:flex; gap:8px; margin-top:18px; }
+    select,input { width:100%; min-width:0; color:var(--text); background:#0f1425; border:1px solid var(--line); border-radius:11px; padding:11px 12px; outline:none; }
+    select:focus,input:focus { border-color:var(--purple); }
+    .subject-row select { flex:1; }
+    .subject-row input { max-width:100px; }
+    .add-row { display:flex; gap:8px; margin-top:12px; }
+    .add-row input { flex:1; }
+    .history { display:grid; gap:9px; }
+    .history-item { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid #29304a; }
+    .history-item:last-child { border-bottom:0; }
+    .history-item strong { display:block; font-size:12px; margin-bottom:4px; }
+    .history-item span { color:var(--muted); font-size:11px; }
+    .history-xp { color:var(--green)!important; font-weight:800; white-space:nowrap; }
+    .empty { color:var(--muted); text-align:center; padding:22px 8px; font-size:13px; }
+    .bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px; }
+    .badge-list { display:flex; gap:9px; flex-wrap:wrap; }
+    .achievement { display:flex; align-items:center; gap:9px; border:1px solid var(--line); border-radius:13px; padding:10px 12px; background:#151b30; min-width:calc(50% - 5px); flex:1; }
+    .achievement .emoji { font-size:23px; }
+    .achievement strong { display:block; font-size:11px; }
+    .achievement span { color:var(--muted); font-size:10px; }
+    .locked { opacity:.38; filter:grayscale(1); }
+    .footer { text-align:center; color:#727e9f; font-size:11px; margin-top:28px; line-height:1.6; }
+    .toast { position:fixed; bottom:18px; left:50%; transform:translate(-50%,20px); opacity:0; pointer-events:none; background:#e8e5ff; color:#17162b; padding:12px 17px; border-radius:12px; font-size:13px; font-weight:800; box-shadow:0 10px 35px #0006; transition:.25s; z-index:20; max-width:90vw; text-align:center; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+
+    .top-nav{display:flex;gap:8px;overflow-x:auto;padding:0 0 18px}.nav-tab{flex:0 0 auto;border:1px solid var(--line);background:#13192b;color:var(--muted);border-radius:12px;padding:11px 14px;font-weight:750;font-size:12px}.nav-tab.active{background:#30294f;border-color:var(--purple);color:white}.extra-page[hidden],[data-page][hidden]{display:none!important}.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.setup-grid label,.builder-form label{display:grid;gap:7px;color:#c9d0e8;font-size:12px;font-weight:700}.builder-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:18px}.builder-form{display:grid;gap:12px;align-content:start}.question-list{display:grid;gap:12px;margin:18px 0}.question-card{background:#151b30;border:1px solid var(--line);border-radius:15px;padding:15px}.question-title{font-size:14px;font-weight:750;line-height:1.55;margin-bottom:12px;white-space:pre-wrap}.question-options{display:grid;gap:8px}.question-option{display:flex;gap:9px;align-items:flex-start;border:1px solid #303854;background:#11172a;border-radius:11px;padding:11px;cursor:pointer;font-size:12px;line-height:1.45}.question-option input{width:auto;margin:2px 0 0;accent-color:var(--purple)}.question-option.good{border-color:#3a9f78;background:#143529}.question-option.bad{border-color:#b45c78;background:#3a1e30}.explanation{margin-top:12px;padding:11px;border-left:3px solid var(--purple);background:#101629;color:#cbd4ef;font-size:12px;line-height:1.6;white-space:pre-wrap}.result-box{text-align:center;background:#282343;border:1px solid #49426d;border-radius:18px;padding:22px;margin:18px 0}.result-box h2{font-size:28px}.own-row{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#151b30;border-radius:12px;padding:12px;font-size:12px}.own-row span{color:var(--muted)}textarea{width:100%;resize:vertical;color:var(--text);background:#0f1425;border:1px solid var(--line);border-radius:11px;padding:11px;font:inherit}@media(max-width:780px){.builder-grid,.setup-grid{grid-template-columns:1fr}}
+
+    @media (max-width:780px) {
+      .hero,.main-grid,.bottom-grid { grid-template-columns:1fr; }
+      .stats { grid-template-columns:repeat(2,1fr); }
+      .app { padding:15px 12px 35px; }
+      .panel { padding:18px; }
+      header { align-items:flex-start; }
+      .header-actions { flex-direction:column; align-items:flex-end; }
+      .pill { padding:8px 10px; font-size:11px; }
+      .quest { gap:9px; padding:10px; }
+      .quest-symbol { width:37px; height:37px; flex-basis:37px; }
+      .quest button { padding:8px; }
+    }
+    @media (max-width:390px) {
+      .brand h1 { font-size:17px; }
+      .brand-mark { width:42px; height:42px; flex-basis:42px; }
+      .quest-reward { display:none; }
+      .stat-value { font-size:22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">⚡</div>
+        <div><h1>StudyQuest</h1><p>Study. Level up. Conquer.</p></div>
+      </div>
+      <div class="header-actions">
+        <div class="pill streak-pill">🔥 <strong id="headerStreak">0 day streak</strong></div>
+        <button class="pill" id="installBtn" hidden>＋ Install app</button>
+      </div>
+    </header>
+
+
+    <nav class="top-nav"><button class="nav-tab active" data-tab="dashboard">🎮 Dashboard</button><button class="nav-tab" data-tab="mocktest">📝 Mock Test</button><button class="nav-tab" data-tab="longqa">📚 Long Q&A</button><button class="nav-tab" data-tab="builder">🛠️ My Questions</button></nav>
+
+    <section class="hero" data-page="dashboard">
+      <div class="panel welcome">
+        <div class="eyebrow">Your adventure starts here</div>
+        <h2>Small steps.<br><span style="color:var(--purple)">Legendary progress.</span></h2>
+        <p>Turn focus into XP, missions into victories, and consistency into your superpower. Your next level is waiting.</p>
+        <div class="level-row">
+          <div class="avatar" id="rankEmoji">🛡️</div>
+          <div class="level-info">
+            <div class="level-info-top"><strong id="rankName">Level 1 · Beginner</strong><span id="xpText">0 / 300 XP</span></div>
+            <div class="progress"><div id="xpBar"></div></div>
+            <div class="small-muted" id="xpHint">300 XP to the next level</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel streak-card">
+        <div class="streak-top"><div class="eyebrow" style="margin:0;color:var(--gold)">Consistency power</div><div class="flame">🔥</div></div>
+        <h3><span id="streakNumber">0</span> day streak</h3>
+        <p>Complete at least one focus session each day to keep your flame alive.</p>
+        <div class="week" id="weekStrip"></div>
+      </div>
+    </section>
+
+    <section class="stats" data-page="dashboard">
+      <div class="panel stat"><div class="stat-top">Today's focus <span class="stat-icon">⏱️</span></div><div class="stat-value" id="todayTime">0m</div><div class="stat-note">Focused time today</div></div>
+      <div class="panel stat"><div class="stat-top">Quests cleared <span class="stat-icon">⚔️</span></div><div class="stat-value" id="questCount">0 / 3</div><div class="stat-note">Daily missions</div></div>
+      <div class="panel stat"><div class="stat-top">Total XP <span class="stat-icon">💎</span></div><div class="stat-value" id="totalXp">0</div><div class="stat-note">Your lifetime score</div></div>
+      <div class="panel stat"><div class="stat-top">Focus sessions <span class="stat-icon">🎯</span></div><div class="stat-value" id="sessionCount">0</div><div class="stat-note">Sessions completed</div></div>
+    </section>
+
+    <section class="main-grid" data-page="dashboard">
+      <div class="panel">
+        <div class="section-head"><div><h2>⚔️ Today's quests</h2><div class="sub">Complete your missions to earn bonus XP.</div></div><span class="pill" id="questBonus">+50 bonus XP</span></div>
+        <div class="quest-list" id="questList"></div>
+        <div class="section-head" style="margin-top:25px"><div><h2>📜 Recent adventures</h2><div class="sub">Your latest completed focus sessions.</div></div></div>
+        <div class="history" id="historyList"></div>
+      </div>
+
+      <div style="display:grid;gap:18px;align-content:start">
+        <div class="panel timer-panel">
+          <div class="section-head"><div style="text-align:left"><h2>🎧 Focus arena</h2><div class="sub">One session at a time. You’ve got this.</div></div></div>
+          <div class="timer-ring" id="timerRing"><div class="timer-content"><div class="timer-time" id="timerDisplay">25:00</div><div class="timer-label" id="timerStatus">READY WHEN YOU ARE</div></div></div>
+          <div class="timer-controls">
+            <button class="btn primary" id="startBtn">▶ Start focus</button>
+            <button class="btn" id="resetBtn">↺ Reset</button>
+          </div>
+          <div class="subject-row">
+            <select id="subjectSelect" aria-label="Choose subject">
+              <option>Physics</option><option>Chemistry</option><option>Mathematics</option><option>Biology</option><option>English</option><option>Other</option>
+            </select>
+            <input id="durationInput" type="number" min="5" value="25" aria-label="Focus minutes" title="Focus minutes">
+          </div>
+          <div class="timer-note">Set a focus duration in minutes. XP is awarded when you complete the session, not when you reset it.</div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head"><div><h2>📚 Study plan</h2><div class="sub">Add a mission that matters to you.</div></div></div>
+          <div class="add-row"><input id="missionInput" maxlength="70" placeholder="e.g. Revise electrostatics" aria-label="New mission"><button class="btn" id="addMissionBtn">＋ Add</button></div>
+          <div class="small-muted">Custom missions are saved on this device. Complete them honestly after studying.</div>
+          <div id="customMissions" style="display:grid;gap:8px;margin-top:12px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bottom-grid" data-page="dashboard">
+      <div class="panel">
+        <div class="section-head"><div><h2>🏅 Achievement vault</h2><div class="sub">Little wins become legendary habits.</div></div></div>
+        <div class="badge-list" id="achievementList"></div>
+      </div>
+      <div class="panel">
+        <div class="section-head"><div><h2>📈 Weekly focus</h2><div class="sub">Minutes from your completed sessions.</div></div></div>
+        <div id="weeklyChart" style="display:grid;gap:12px"></div>
+        <div class="small-muted" style="margin-top:13px">Your progress is stored in this browser on this device.</div>
+      </div>
+    </section>
+
+    <section class="panel extra-page" data-page="mocktest" hidden><div class="section-head"><div><h2>📝 Mock Test Arena</h2><div class="sub">Submit your answers to see your score, correct answers, and explanations.</div></div></div><div id="mockSetup"><div class="setup-grid"><label>Subject<select id="mockSubject"><option>Physics</option><option>Chemistry</option><option>Biology</option><option>Mathematics</option><option>English</option><option>General</option></select></label><label>Questions<select id="mockCount"><option value="5">5 questions</option><option value="10">10 questions</option></select></label></div><button class="btn primary" id="beginMock">Start mock test →</button></div><div id="mockRun" hidden><div id="mockQuestions" class="question-list"></div><button class="btn primary" id="submitMock">Submit test</button></div><div id="mockResults" hidden><div class="result-box"><div class="eyebrow">Test completed</div><h2 id="mockScore"></h2><p id="mockPercent"></p></div><h2>Answer review</h2><div id="mockReview" class="question-list"></div><button class="btn primary" id="mockAgain">Try another test</button></div></section>
+    <section class="panel extra-page" data-page="longqa" hidden><div class="section-head"><div><h2>📚 Long Question & Answer Bank</h2><div class="sub">Search subject-wise questions and reveal detailed model answers.</div></div></div><div class="setup-grid"><label>Subject<select id="qaSubject"><option>All</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>Mathematics</option></select></label><label>Search<input id="qaSearch" placeholder="Search topic or question"></label></div><div id="qaList" class="question-list"></div><p class="small-muted">Starter examples only. Check answers against your current textbook and syllabus.</p></section>
+    <section class="panel extra-page" data-page="builder" hidden><div class="section-head"><div><h2>🛠️ My Question Workshop</h2><div class="sub">Create your own MCQs, set the correct answer, then test yourself.</div></div></div><div class="builder-grid"><div class="builder-form"><label>Subject<select id="ownSubject"><option>Physics</option><option>Chemistry</option><option>Biology</option><option>Mathematics</option><option>English</option><option>General</option></select></label><label>Question<input id="ownQ" maxlength="400" placeholder="Write your question"></label><label>Option A<input id="ownA" maxlength="200"></label><label>Option B<input id="ownB" maxlength="200"></label><label>Option C<input id="ownC" maxlength="200"></label><label>Option D<input id="ownD" maxlength="200"></label><label>Correct answer<select id="ownCorrect"><option value="0">Option A</option><option value="1">Option B</option><option value="2">Option C</option><option value="3">Option D</option></select></label><label>Explanation (optional)<textarea id="ownExplain" rows="3" maxlength="700" placeholder="Explain why it is correct"></textarea></label><button class="btn primary" id="saveOwn">＋ Save question</button></div><div><h2>Your saved questions (<span id="ownCount">0</span>)</h2><div id="ownList" class="question-list"></div><button class="btn primary" id="beginOwn" disabled>Start test with my questions</button></div></div><div id="ownRun" hidden><h2>Custom test</h2><div id="ownQuestions" class="question-list"></div><button class="btn primary" id="submitOwn">Submit custom test</button><div id="ownReview" class="question-list"></div></div></section>
+
+    <div class="footer">StudyQuest prototype · Your data stays in this browser on this device.<br>Tip: back up your progress before clearing browser data.</div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "studyquest-v1";
+  const DAILY = [
+    {id:"focus", title:"Enter the Focus Arena", detail:"Complete one focus session", icon:"🎧", xp:50},
+    {id:"revision", title:"Revision Ranger", detail:"Finish a revision mission", icon:"📖", xp:30},
+    {id:"questions", title:"Question Slayer", detail:"Solve a set of practice questions", icon:"🎯", xp:40}
+  ];
+  const RANKS = ["Beginner","Learner","Apprentice","Scholar","Expert","Master","Grandmaster","Legend"];
+  const ACHIEVEMENTS = [
+    {id:"first",icon:"🌱",name:"First Quest",desc:"Complete your first session",test:s=>s.sessions.length>=1},
+    {id:"hour",icon:"⌛",name:"Hour Hero",desc:"Focus for 60 minutes total",test:s=>totalMinutes(s)>=60},
+    {id:"three",icon:"⚡",name:"Triple Threat",desc:"Complete 3 sessions",test:s=>s.sessions.length>=3},
+    {id:"streak",icon:"🔥",name:"On Fire",desc:"Reach a 3-day streak",test:s=>s.streak>=3},
+    {id:"xp",icon:"💎",name:"XP Collector",desc:"Earn 500 XP",test:s=>s.xp>=500},
+    {id:"ten",icon:"🏆",name:"Quest Veteran",desc:"Complete 10 sessions",test:s=>s.sessions.length>=10}
+  ];
+  const $ = id => document.getElementById(id);
+  const todayKey = () => localDate(new Date());
+  function localDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+  function dateFromKey(k) { const [y,m,d]=k.split("-").map(Number); return new Date(y,m-1,d); }
+  function defaultState() {
+    return {xp:0,streak:0,lastStudyDate:null,studyDates:[],sessions:[],dailyClaims:{},customMissions:[],timerSubject:"Physics"};
+  }
+  function load() {
+    try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)); return saved && typeof saved==="object" ? {...defaultState(),...saved} : defaultState(); }
+    catch { return defaultState(); }
+  }
+  let state = load(), timerSeconds = 25*60, initialSeconds = 25*60, interval = null, running = false, startedAt = null, deferredInstall = null;
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function toast(message) { const el=$("toast"); el.textContent=message; el.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),2400); }
+  function totalMinutes(s=state) { return s.sessions.reduce((sum,x)=>sum+(x.minutes||0),0); }
+  function levelInfo(xp) {
+    const level=Math.floor(xp/300)+1, within=xp%300;
+    return {level,within,rank:RANKS[Math.min(level-1,RANKS.length-1)]};
+  }
+  function updateStreakAfterSession() {
+    const today=todayKey(), last=state.lastStudyDate;
+    if(last!==today) {
+      if(last) {
+        const diff=Math.round((dateFromKey(today)-dateFromKey(last))/86400000);
+        state.streak = diff===1 ? state.streak+1 : 1;
+      } else state.streak=1;
+      state.lastStudyDate=today;
+      if(!state.studyDates.includes(today)) state.studyDates.push(today);
+    }
+  }
+  function renderWeek() {
+    const el=$("weekStrip"), today=new Date(), names=["S","M","T","W","T","F","S"];
+    const start=new Date(today); start.setDate(today.getDate()-6);
+    el.innerHTML="";
+    for(let i=0;i<7;i++) {
+      const d=new Date(start); d.setDate(start.getDate()+i);
+      const key=localDate(d), done=state.studyDates.includes(key);
+      const div=document.createElement("div"); div.className="day"+(done?" done":"");
+      div.innerHTML=`<span>${done?"✓":d.getDate()}</span>${names[d.getDay()]}`;
+      el.appendChild(div);
+    }
+  }
+  function renderQuests() {
+    const el=$("questList"), today=todayKey(), claims=state.dailyClaims[today]||[];
+    el.innerHTML="";
+    DAILY.forEach(q=>{
+      const done=claims.includes(q.id), div=document.createElement("div"); div.className="quest";
+      div.innerHTML=`<div class="quest-symbol">${q.icon}</div><div class="quest-info"><strong>${q.title}</strong><span>${q.detail}</span></div><span class="quest-reward">+${q.xp} XP</span><button ${done?"disabled":""} data-claim="${q.id}">${done?"✓ Done":"Claim"}</button>`;
+      el.appendChild(div);
+    });
+    el.querySelectorAll("[data-claim]").forEach(btn=>btn.addEventListener("click",()=>claimQuest(btn.dataset.claim)));
+    $("questCount").textContent=`${claims.length} / ${DAILY.length}`;
+    $("questBonus").textContent=claims.length===DAILY.length?"All cleared!":"Up to +120 XP";
+  }
+  function claimQuest(id) {
+    const q=DAILY.find(x=>x.id===id); if(!q)return;
+    const today=todayKey(); state.dailyClaims[today] ||= [];
+    if(state.dailyClaims[today].includes(id))return;
+    if(id==="focus" && !state.sessions.some(s=>s.date===today)) { toast("Complete a focus session first."); return; }
+    if(id==="revision" || id==="questions") {
+      const label=id==="revision"?"revision":"practice questions";
+      if(!confirm(`Confirm you completed your ${label} mission?`))return;
+    }
+    state.dailyClaims[today].push(id); state.xp+=q.xp; save(); render(); toast(`Quest complete! +${q.xp} XP ✨`);
+  }
+  function renderCustomMissions() {
+    const el=$("customMissions"); el.innerHTML="";
+    if(!state.customMissions.length) { el.innerHTML='<div class="empty">No custom missions yet. Add one above!</div>'; return; }
+    state.customMissions.forEach(m=>{
+      const row=document.createElement("div"); row.className="quest";
+      row.innerHTML=`<div class="quest-symbol">📝</div><div class="quest-info"><strong></strong><span>${m.done?"Completed":"Custom mission · +20 XP"}</span></div><button ${m.done?"disabled":""}>${m.done?"✓ Done":"Complete"}</button>`;
+      row.querySelector("strong").textContent=m.title;
+      row.querySelector("button").addEventListener("click",()=>{
+        if(m.done)return;
+        if(!confirm("Mark this mission complete after you have finished it?"))return;
+        m.done=true; state.xp+=20; save(); render(); toast("Mission complete! +20 XP");
+      });
+      el.appendChild(row);
+    });
+  }
+  function renderHistory() {
+    const el=$("historyList"); el.innerHTML="";
+    const recent=state.sessions.slice(0,5);
+    if(!recent.length) { el.innerHTML='<div class="empty">Your first adventure is one focus session away.</div>'; return; }
+    recent.forEach(s=>{
+      const row=document.createElement("div"); row.className="history-item";
+      const left=document.createElement("div"); const title=document.createElement("strong"); title.textContent=s.subject;
+      const meta=document.createElement("span"); meta.textContent=`${s.minutes} min · ${s.date}`;
+      left.append(title,meta); const xp=document.createElement("span"); xp.className="history-xp"; xp.textContent=`+${s.xp} XP`;
+      row.append(left,xp); el.appendChild(row);
+    });
+  }
+  function renderAchievements() {
+    const el=$("achievementList"); el.innerHTML="";
+    ACHIEVEMENTS.forEach(a=>{
+      const unlocked=a.test(state), div=document.createElement("div"); div.className="achievement"+(unlocked?"":" locked");
+      div.innerHTML=`<div class="emoji">${a.icon}</div><div><strong>${a.name}</strong><span>${a.desc}</span></div>`;
+      el.appendChild(div);
+    });
+  }
+  function renderWeekly() {
+    const el=$("weeklyChart"); el.innerHTML="";
+    const today=new Date(), data=[];
+    for(let i=6;i>=0;i--) {
+      const d=new Date(today); d.setDate(today.getDate()-i); const key=localDate(d);
+      const mins=state.sessions.filter(s=>s.date===key).reduce((n,s)=>n+s.minutes,0);
+      data.push({label:d.toLocaleDateString(undefined,{weekday:"short"}),mins});
+    }
+    const max=Math.max(30,...data.map(x=>x.mins));
+    data.forEach(x=>{
+      const row=document.createElement("div"); row.style.cssText="display:grid;grid-template-columns:34px 1fr 42px;align-items:center;gap:9px;font-size:11px;color:var(--muted)";
+      const label=document.createElement("span"); label.textContent=x.label;
+      const track=document.createElement("div"); track.className="progress"; track.style.height="8px";
+      const fill=document.createElement("div"); fill.style.width=`${Math.min(100,x.mins/max*100)}%`; fill.style.background="linear-gradient(90deg,var(--blue),var(--purple))"; track.appendChild(fill);
+      const val=document.createElement("span"); val.style.textAlign="right"; val.textContent=`${x.mins}m`;
+      row.append(label,track,val); el.appendChild(row);
+    });
+  }
+  function render() {
+    const info=levelInfo(state.xp);
+    $("rankName").textContent=`Level ${info.level} · ${info.rank}`;
+    $("xpText").textContent=`${info.within} / 300 XP`;
+    $("xpBar").style.width=`${info.within/300*100}%`;
+    $("xpHint").textContent=`${300-info.within} XP to the next level`;
+    $("rankEmoji").textContent=info.level>=8?"👑":info.level>=5?"🏆":info.level>=3?"⚔️":"🛡️";
+    $("streakNumber").textContent=state.streak; $("headerStreak").textContent=`${state.streak} day${state.streak===1?"":"s"} streak`;
+    $("todayTime").textContent=prettyMinutes(state.sessions.filter(s=>s.date===todayKey()).reduce((n,s)=>n+s.minutes,0));
+    $("totalXp").textContent=state.xp.toLocaleString();
+    $("sessionCount").textContent=state.sessions.length;
+    renderWeek(); renderQuests(); renderHistory(); renderAchievements(); renderWeekly(); renderCustomMissions();
+  }
+  function prettyMinutes(n) { if(n<60)return `${n}m`; const h=Math.floor(n/60),m=n%60; return m?`${h}h ${m}m`:`${h}h`; }
+  function setTimerDisplay() {
+    const m=Math.floor(timerSeconds/60), s=timerSeconds%60;
+    $("timerDisplay").textContent=`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    const pct=initialSeconds?((initialSeconds-timerSeconds)/initialSeconds)*100:0;
+    $("timerRing").style.setProperty("--ring",`${pct}%`);
+    $("startBtn").textContent=running?"Ⅱ Pause focus":"▶ Start focus";
+    $("timerStatus").textContent=running?"FOCUS IN PROGRESS":timerSeconds===initialSeconds?"READY WHEN YOU ARE":"PAUSED · TAKE A BREATH";
+    $("durationInput").disabled=running;
+    $("subjectSelect").disabled=running;
+  }
+  function stopInterval() { if(interval){clearInterval(interval);interval=null;} running=false; }
+  function resetTimer() {
+    stopInterval(); const mins=Math.max(5,parseInt($("durationInput").value,10)||25);
+    $("durationInput").value=mins; timerSeconds=mins*60; initialSeconds=timerSeconds; startedAt=null; setTimerDisplay();
+  }
+  function clamp(n,min,max){return Math.min(max,Math.max(min,n));}
+  function startTimer() {
+    if(running) { stopInterval(); setTimerDisplay(); return; }
+    if(timerSeconds<=0)resetTimer();
+    running=true; if(!startedAt)startedAt=Date.now();
+    setTimerDisplay();
+    interval=setInterval(()=>{
+      timerSeconds--; setTimerDisplay();
+      if(timerSeconds<=0)completeSession();
+    },1000);
+  }
+  function completeSession() {
+    stopInterval();
+    const minutes=Math.round(initialSeconds/60), subject=$("subjectSelect").value;
+    const xp=Math.max(10,minutes*2);
+    state.sessions.unshift({subject,minutes,xp,date:todayKey(),completedAt:new Date().toISOString()});
+    state.xp+=xp; updateStreakAfterSession(); save();
+    timerSeconds=0; setTimerDisplay(); render();
+    toast(`Focus complete! +${xp} XP earned. Great work!`);
+    if("Notification" in window && Notification.permission==="granted") new Notification("StudyQuest: Quest complete!",{body:`You earned ${xp} XP for ${minutes} minutes of ${subject}.`});
+  }
+  $("startBtn").addEventListener("click",startTimer);
+  $("resetBtn").addEventListener("click",()=>{resetTimer();toast("Timer reset.");});
+  const savedDuration = localStorage.getItem("studyquestDuration");
+if (savedDuration) {
+  $("durationInput").value = savedDuration;
+  resetTimer();
+}
+
+$("durationInput").addEventListener("change", () => {
+  localStorage.setItem("studyquestDuration", $("durationInput").value);
+  resetTimer();
+});
+  $("subjectSelect").addEventListener("change",()=>{state.timerSubject=$("subjectSelect").value;save();});
+  $("addMissionBtn").addEventListener("click",()=>{
+    const input=$("missionInput"), title=input.value.trim();
+    if(!title){toast("Write a mission first.");return;}
+    state.customMissions.unshift({id:Date.now().toString(),title,done:false});
+    input.value="";save();renderCustomMissions();toast("Mission added. Go conquer it!");
+  });
+  $("missionInput").addEventListener("keydown",e=>{if(e.key==="Enter")$("addMissionBtn").click();});
+  $("subjectSelect").value=state.timerSubject||"Physics";
+  resetTimer(); render();
+
+  // Install prompt: appears only when the browser supports PWA installation.
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;$("installBtn").hidden=false;});
+  $("installBtn").addEventListener("click",async()=>{
+    if(!deferredInstall){toast("Use your browser menu and choose Add to Home screen.");return;}
+    deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall=null; $("installBtn").hidden=true;
+  });
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+  }
+
+  // StudyQuest learning sections: sample mock test, long answers, and user-created MCQs.
+  document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('[data-page]').forEach(x=>x.hidden=x.dataset.page!==b.dataset.tab);window.scrollTo({top:0,behavior:'smooth'});if(b.dataset.tab==='longqa')renderQA();if(b.dataset.tab==='builder')renderOwn();}));
+  const sample=[
+   {s:'Physics',q:'What is the SI unit of force?',o:['Joule','Newton','Watt','Pascal'],c:1,e:'Force is measured in newtons (N).'},
+   {s:'Physics',q:'A body travels 100 m in 20 s. What is its average speed?',o:['2 m/s','4 m/s','5 m/s','10 m/s'],c:2,e:'Average speed = distance ÷ time = 100 ÷ 20 = 5 m/s.'},
+   {s:'Physics',q:'Which law says every action has an equal and opposite reaction?',o:['Newton’s first law','Newton’s second law','Newton’s third law','Law of gravitation'],c:2,e:'This is Newton’s third law of motion.'},
+   {s:'Physics',q:'Which instrument measures electric current?',o:['Voltmeter','Ammeter','Thermometer','Barometer'],c:1,e:'An ammeter measures electric current.'},
+   {s:'Chemistry',q:'What is the chemical formula of water?',o:['CO₂','O₂','H₂O','NaCl'],c:2,e:'A water molecule contains two hydrogen atoms and one oxygen atom.'},
+   {s:'Chemistry',q:'A solution with pH 3 is generally:',o:['Acidic','Neutral','Basic','Always a salt'],c:0,e:'At 25°C, a pH below 7 is acidic.'},
+   {s:'Chemistry',q:'What kind of bond forms when atoms share electron pairs?',o:['Ionic','Covalent','Metallic only','Hydrogen only'],c:1,e:'Covalent bonds involve shared electron pairs.'},
+   {s:'Biology',q:'Which organelle is the main site of photosynthesis in plants?',o:['Mitochondrion','Chloroplast','Nucleus','Ribosome'],c:1,e:'Chloroplasts contain chlorophyll and carry out photosynthesis.'},
+   {s:'Biology',q:'What is the basic structural and functional unit of life?',o:['Organ','Tissue','Cell','Organ system'],c:2,e:'The cell is the basic unit of life.'},
+   {s:'Biology',q:'Which organ pumps blood around the human body?',o:['Liver','Lung','Kidney','Heart'],c:3,e:'The heart pumps blood through the circulatory system.'},
+   {s:'Mathematics',q:'Solve: 2x + 6 = 14.',o:['x = 2','x = 3','x = 4','x = 10'],c:2,e:'Subtract 6: 2x = 8, so x = 4.'},
+   {s:'Mathematics',q:'What is the area of a rectangle 8 cm long and 3 cm wide?',o:['11 cm²','22 cm²','24 cm²','48 cm²'],c:2,e:'Area = length × width = 8 × 3 = 24 cm².'},
+   {s:'English',q:'Choose the grammatically correct sentence.',o:['She go to school.','She goes to school.','She going to school.','She gone to school.'],c:1,e:'Use “goes” with third-person singular in the simple present.'},
+   {s:'General',q:'Which planet is known as the Red Planet?',o:['Venus','Mars','Jupiter','Mercury'],c:1,e:'Mars appears reddish due to iron-rich dust.'},
+   {s:'General',q:'Which is the largest ocean on Earth?',o:['Atlantic','Indian','Arctic','Pacific'],c:3,e:'The Pacific Ocean is the largest ocean.'}
+  ];
+  const longQA=[
+   {s:'Physics',q:'State Newton’s three laws of motion and give an example of each.',a:'First law (inertia): an object stays at rest or in uniform straight-line motion unless acted on by a net external force. Example: passengers move forward when a bus stops suddenly.\n\nSecond law: net force equals rate of change of momentum; for constant mass, F = ma. Example: an empty trolley accelerates more than a loaded trolley under the same push.\n\nThird law: every action has an equal and opposite reaction. Example: when walking, your foot pushes the ground backward and the ground pushes you forward.'},
+   {s:'Physics',q:'Explain the conservation of energy using a freely falling object.',a:'The law of conservation of energy states that energy cannot be created or destroyed; it can only be transferred or transformed. As an object falls, gravitational potential energy decreases while kinetic energy increases. If air resistance is ignored, the loss in potential energy equals the gain in kinetic energy, so total mechanical energy remains constant.'},
+   {s:'Chemistry',q:'Explain the difference between ionic and covalent bonding with examples.',a:'An ionic bond forms when electrons are transferred between atoms, creating oppositely charged ions that attract each other. Sodium chloride is a common example. A covalent bond forms when atoms share electron pairs, as in H₂ or H₂O. Ionic compounds often conduct electricity when molten or dissolved, while many simple covalent substances do not. These are general trends with exceptions.'},
+   {s:'Chemistry',q:'What are acids and bases? Describe two ways to identify them safely.',a:'Under the Arrhenius definition, acids produce hydrogen ions in aqueous solution and bases produce hydroxide ions. Blue litmus typically turns red in acid; red litmus typically turns blue in base. Universal indicator gives colours related to pH. Never taste or directly touch unknown chemicals; follow laboratory safety procedures.'},
+   {s:'Biology',q:'Describe photosynthesis and explain its importance.',a:'Photosynthesis uses light energy to make energy-rich organic compounds from carbon dioxide and water. In plants, chlorophyll in chloroplasts absorbs light energy and oxygen is released. A simplified equation is: carbon dioxide + water + light energy → glucose + oxygen. Photosynthesis stores energy, supports food chains, and contributes oxygen to the atmosphere.'},
+   {s:'Biology',q:'Explain the main parts of the human digestive system and their functions.',a:'The mouth breaks food into smaller pieces and saliva begins starch digestion. The oesophagus moves food to the stomach by peristalsis. The stomach mixes food and gastric juice helps digest proteins. In the small intestine, digestion is completed and most nutrients are absorbed through villi; bile helps emulsify fats. The large intestine absorbs water and salts, and the rectum stores faeces before elimination.'},
+   {s:'Mathematics',q:'Explain the quadratic formula and use it to solve x² − 5x + 6 = 0.',a:'For ax² + bx + c = 0, where a ≠ 0, the quadratic formula is x = (−b ± √(b² − 4ac)) / (2a). Here a=1, b=−5, c=6. Therefore x=(5 ± √(25−24))/2=(5 ± 1)/2. The solutions are x=3 and x=2.'}
+  ];
+  function makeCard(q,i,group,review,answer){const card=document.createElement('div');card.className='question-card';const title=document.createElement('div');title.className='question-title';title.textContent=`${i+1}. ${q.q||q.question}`;card.append(title);const opts=document.createElement('div');opts.className='question-options';(q.o||q.options).forEach((o,j)=>{const lab=document.createElement('label');lab.className='question-option';if(review){lab.textContent=String.fromCharCode(65+j)+'. '+o;if(j===q.corr)lab.classList.add('good');if(j===answer&&j!==q.corr)lab.classList.add('bad');}else{const input=document.createElement('input');input.type='radio';input.name=group+'-'+i;input.value=j;input.addEventListener('change',()=>lab.parentElement.querySelectorAll('.question-option').forEach(x=>x.classList.remove('selected')));lab.append(input,document.createTextNode(String.fromCharCode(65+j)+'. '+o));}opts.append(lab)});card.append(opts);if(review){const ex=document.createElement('div');ex.className='explanation';ex.textContent=(answer===q.corr?'✓ Correct. ':'✕ Not quite. ')+'Correct answer: '+String.fromCharCode(65+q.corr)+'. '+(q.o||q.options)[q.corr]+(q.e||q.explanation?'\n\nExplanation: '+(q.e||q.explanation):'');card.append(ex)}return card}
+  let currentMock=[];function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+  $('beginMock').addEventListener('click',()=>{let subject=$('mockSubject').value,n=Number($('mockCount').value);let bank=sample.filter(x=>x.s===subject);if(subject==='General')bank=sample.filter(x=>x.s==='General');if(bank.length<n)bank=bank.concat(sample.filter(x=>!bank.includes(x)));currentMock=shuffle(bank).slice(0,n).map(x=>({...x,corr:x.c}));$('mockSetup').hidden=true;$('mockResults').hidden=true;$('mockRun').hidden=false;let el=$('mockQuestions');el.innerHTML='';currentMock.forEach((q,i)=>el.append(makeCard(q,i,'mock',false)));});
+  $('submitMock').addEventListener('click',()=>{let answers=currentMock.map((q,i)=>{let x=document.querySelector(`input[name="mock-${i}"]:checked`);return x?Number(x.value):null});let score=currentMock.reduce((n,q,i)=>n+(answers[i]===q.corr?1:0),0);$('mockRun').hidden=true;$('mockResults').hidden=false;$('mockScore').textContent=`${score} / ${currentMock.length} correct`;$('mockPercent').textContent=`${Math.round(score/currentMock.length*100)}% score · Review every answer below.`;let el=$('mockReview');el.innerHTML='';currentMock.forEach((q,i)=>el.append(makeCard(q,i,'review',true,answers[i])));if(score){state.xp+=score*5;save();render();toast(`Mock test complete! +${score*5} XP`)}window.scrollTo({top:0,behavior:'smooth'})});$('mockAgain').addEventListener('click',()=>{$('mockResults').hidden=true;$('mockSetup').hidden=false});
+  function renderQA(){let subject=$('qaSubject').value,term=$('qaSearch').value.toLowerCase();let el=$('qaList');el.innerHTML='';longQA.filter(x=>(subject==='All'||x.s===subject)&&(!term||(x.q+x.a+x.s).toLowerCase().includes(term))).forEach((q,i)=>{let card=document.createElement('div');card.className='question-card';let title=document.createElement('div');title.className='question-title';title.textContent=q.q;let tag=document.createElement('span');tag.className='subject-tag';tag.textContent=q.s;let btn=document.createElement('button');btn.className='answer-toggle btn';btn.textContent='Show model answer ↓';let answer=document.createElement('div');answer.className='explanation';answer.hidden=true;answer.textContent=q.a;btn.addEventListener('click',()=>{answer.hidden=!answer.hidden;btn.textContent=answer.hidden?'Show model answer ↓':'Hide model answer ↑'});card.append(tag,title,btn,answer);el.append(card)});if(!el.children.length)el.innerHTML='<div class="empty">No matching questions.</div>'}
+  $('qaSubject').addEventListener('change',renderQA);$('qaSearch').addEventListener('input',renderQA);
+  const ownKey='studyquest-own-questions-v1';let own=[];try{own=JSON.parse(localStorage.getItem(ownKey))||[]}catch{own=[]}let ownTest=[];
+  function renderOwn(){let list=$('ownList');list.innerHTML='';$('ownCount').textContent=own.length;$('beginOwn').disabled=!own.length;if(!own.length)list.innerHTML='<div class="empty">Add your first question using the form.</div>';own.forEach((q,i)=>{let row=document.createElement('div');row.className='own-row';let left=document.createElement('div');left.textContent=q.q;let meta=document.createElement('span');meta.textContent=q.s+' · Answer '+String.fromCharCode(65+q.c);left.append(document.createElement('br'),meta);let del=document.createElement('button');del.className='btn';del.textContent='Delete';del.addEventListener('click',()=>{own.splice(i,1);localStorage.setItem(ownKey,JSON.stringify(own));renderOwn()});row.append(left,del);list.append(row)})}
+  $('saveOwn').addEventListener('click',()=>{let q=$('ownQ').value.trim(),o=['ownA','ownB','ownC','ownD'].map(id=>$(id).value.trim());if(!q||o.some(x=>!x)){toast('Fill in the question and all four options.');return}own.unshift({s:$('ownSubject').value,q,o,c:Number($('ownCorrect').value),e:$('ownExplain').value.trim()});localStorage.setItem(ownKey,JSON.stringify(own));['ownQ','ownA','ownB','ownC','ownD','ownExplain'].forEach(id=>$(id).value='');renderOwn();toast('Your question was saved!')});
+  $('beginOwn').addEventListener('click',()=>{ownTest=shuffle(own).map(x=>({...x,corr:x.c}));$('ownRun').hidden=false;$('ownReview').innerHTML='';let el=$('ownQuestions');el.innerHTML='';ownTest.forEach((q,i)=>el.append(makeCard(q,i,'own',false)));$('ownRun').scrollIntoView({behavior:'smooth'})});
+  $('submitOwn').addEventListener('click',()=>{let answers=ownTest.map((q,i)=>{let x=document.querySelector(`input[name="own-${i}"]:checked`);return x?Number(x.value):null});let score=ownTest.reduce((n,q,i)=>n+(answers[i]===q.corr?1:0),0);let el=$('ownReview');el.innerHTML=`<div class="result-box"><h2>${score} / ${ownTest.length} correct</h2><p>${Math.round(score/ownTest.length*100)}% score. Correct answers and explanations:</p></div>`;ownTest.forEach((q,i)=>el.append(makeCard(q,i,'ownreview',true,answers[i])));if(score){state.xp+=score*5;save();render();toast(`Custom test complete! +${score*5} XP`)}el.scrollIntoView({behavior:'smooth'})});renderQA();renderOwn();
+
+})();
+</script>
+  <script type="module" src="firebase-sync.js"></script>
+</body>
+</html>

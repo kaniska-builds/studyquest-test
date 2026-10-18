@@ -1,0 +1,19 @@
+
+{
+  "name": "StudyQuest",
+  "short_name": "StudyQuest",
+  "description": "Your personal study dashboard, mock tests and quizzes",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
